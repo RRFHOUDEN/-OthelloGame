@@ -1,4 +1,6 @@
 #othello game code
+
+
 class othello_game:
     def __init__(self, boad_size):
         self.boad_size = boad_size
@@ -7,24 +9,6 @@ class othello_game:
         self.boad[self.boad_size // 2][self.boad_size // 2] = 1
         self.boad[self.boad_size // 2 - 1][self.boad_size // 2] = -1
         self.boad[self.boad_size // 2][self.boad_size // 2 - 1] = -1
-
-    def print_boad(self):
-        line = 0
-        print("   ", end = "")
-        for i in range(self.boad_size):
-            print(i,  end = "  ")
-        print()
-        for i in self.boad:
-            print(line, end=" ")
-            line += 1
-            for j in i:
-                if j == 0:
-                    print(" - ", end ="")
-                elif j == 1:
-                    print(" O ", end = "")
-                elif j == -1:
-                    print(" X ", end = "")
-            print()
 
     def can_put(self, i, j, target): #おけるかを調べる
         if self.boad[i][j] != 0:
@@ -119,45 +103,116 @@ class othello_game:
                     team_m1 += 1
         return [team_1, team_m1]
 
-import os
-os.system('cls')
-print("please input size of boad")
-boad_size = int(input())
-game = othello_game(boad_size)
-os.system('cls')
-game.print_boad()
+class controller():
+    def __init__(self, boad, boad_size):
+        self.boad = boad
+        self.boad_size = boad_size
 
-target = 1
-finish = 0
-while True:
-    if target == 1:
-        print("O turn")
-    else:
-        print("X turn")
+    def print_boad(self, i_now=-1, j_now=-1, target=0):
+        for i in range(self.boad_size):
+            for j in range(self.boad_size):
+                if i == i_now and j == j_now:
+                    if target == 1:
+                        print(" O ", end = "")
+                    else:
+                        print(" X ", end="")
 
-    if not game.exist_can_plase(target):
-        target *= -1
-        if not game.exist_can_plase(target):
-            print("finish!")
-            finish = 1
-            break
-        print("there is not exist place, where you can put.")
+                elif self.boad[i][j] == 0:
+                    print(" - ", end = "")
+                elif self.boad[i][j] == 1:
+                    print(" O ", end = "")
+                elif self.boad[i][j] == -1:
+                    print(" X ", end = "")
+            print()
 
-    if finish:
-        break
-
-    i, j = map(int, input().split())
-    if i == -1 and j == -1:
-        break
-    if game.can_put(i, j, target):
-
-        game.update_boad(i, j, target)
+    def select_square(self, target, i=0, j=0):
         os.system('cls')
-        game.print_boad()
-        target *= -1
+        if target == 1:
+            print("O turn")
+        else:
+            print("X turn")
+        self.print_boad(i, j, target)
+        while True:
+            input_key = readchar.readkey()
+            if input_key == " ":
+                return [i, j]
+            if not("0" <= input_key <= "9"):
+                continue
+            input_num = int(input_key)
+            if input_num == 9:
+                input_key = input("finish?(y/n)")
+                if input_key == "y":
+                    return -1, -1
+                else:
+                    continue
 
-    else:
-        print("you can't put this place!")
+            if input_num == 6:
+                j += 1
+            if input_num == 4:
+                j -= 1
+            if input_num == 2:
+                i += 1
+            if input_num == 8:
+                i -= 1
 
-[point1, point2] = game.calculate_points()
-print(f'A team is {point1} point, B team is {point2} point')
+            if i < 0:
+                i = 0
+            if self.boad_size <= i:
+                i = self.boad_size - 1
+            if j < 0:
+                j = 0
+            if self.boad_size <= j:
+                j = self.boad_size - 1
+            # sys.stdout.write(read)
+            os.system('cls')
+            if target == 1:
+                print("O turn")
+            else:
+                print("X turn")
+            self.print_boad(i, j, target)
+
+
+import os
+import readchar
+import sys
+
+def main():
+    os.system('cls')
+    print("please input size of boad")
+    boad_size = int(input())
+    game = othello_game(boad_size)
+    controll = controller(game.boad, game.boad_size)
+    target = 1
+    finish = 0
+    i = 0
+    j = 0
+
+    while True:
+        if not game.exist_can_plase(target):
+            target *= -1
+            if not game.exist_can_plase(target):
+                print("finish!")
+                finish = 1
+                break
+            print("there is not exist place, where you can put.")
+
+        if finish:
+            break
+
+        i, j = controll.select_square(target, i, j)
+        if i == -1 and j == -1:
+            break
+        if game.can_put(i, j, target):
+            game.update_boad(i, j, target)
+            os.system('cls')
+            target *= -1
+            i = 0
+            j = 0
+
+    # controll.print_boad(0, 0)
+
+main()
+
+#
+# [point1, point2] = game.calculate_points()
+# print(f'A team is {point1} point, B team is {point2} point')
