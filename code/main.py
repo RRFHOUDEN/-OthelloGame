@@ -113,9 +113,9 @@ class controller():
             for j in range(self.boad_size):
                 if i == i_now and j == j_now:
                     if target == 1:
-                        print(" O ", end = "")
+                        print("_O_", end = "")
                     else:
-                        print(" X ", end="")
+                        print("_X_", end="")
 
                 elif self.boad[i][j] == 0:
                     print(" - ", end = "")
@@ -171,16 +171,27 @@ class controller():
                 print("X turn")
             self.print_boad(i, j, target)
 
+class CPU_match(othello_game):
+    def decide_squere(self):
+        target = -1
+        ij_list = []
+        for i in range(self.boad_size):
+            for j in range(self.boad_size):
+                if self.can_put(i, j, target):
+                    return i, j
+
+
 
 import os
 import readchar
 import sys
+import copy
 
-def main():
+def main(cpu=0):
     os.system('cls')
     print("please input size of boad")
     boad_size = int(input())
-    game = othello_game(boad_size)
+    game = CPU_match(boad_size)
     controll = controller(game.boad, game.boad_size)
     target = 1
     finish = 0
@@ -194,10 +205,16 @@ def main():
                 print("finish!")
                 finish = 1
                 break
-            print("there is not exist place, where you can put.")
 
         if finish:
             break
+        if cpu and target == -1:
+            i, j = game.decide_squere()
+            game.update_boad(i, j, target)
+            target *= -1
+            i = 0
+            j = 0
+            continue
 
         i, j = controll.select_square(target, i, j)
         if i == -1 and j == -1:
@@ -205,14 +222,19 @@ def main():
         if game.can_put(i, j, target):
             game.update_boad(i, j, target)
             os.system('cls')
+            controll.print_boad()
             target *= -1
             i = 0
             j = 0
+    print(game.calculate_points())
 
-    # controll.print_boad(0, 0)
 
-main()
-
-#
-# [point1, point2] = game.calculate_points()
-# print(f'A team is {point1} point, B team is {point2} point')
+if __name__ == '__main__':
+    yn = input("Do you play?(y/n)")
+    while yn == "y":
+        cpu = input("CPU or manual?(c/m)")
+        if cpu == "c":
+            main(1)
+        else:
+            main()
+        yn = input("Do you play again?(y/n)")
