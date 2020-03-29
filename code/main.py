@@ -1,5 +1,8 @@
 #othello game code
-
+import os
+import readchar
+import sys
+import copy
 
 class othello_game:
     def __init__(self, boad_size):
@@ -182,11 +185,6 @@ class CPU_match(othello_game):
 
 
 
-import os
-import readchar
-import sys
-import copy
-
 def main(cpu=0):
     os.system('cls')
     print("please input size of boad")
@@ -232,9 +230,11 @@ def main(cpu=0):
 if __name__ == '__main__':
     yn = input("Do you play?(y/n)")
     while yn == "y":
-        cpu = input("CPU or manual?(c/m)")
+        cpu = input("CPU or manual or NetWork?(c/m/n)")
         if cpu == "c":
             main(1)
-        else:
+        elif cpu == "m":
             main()
+        else:
+            main(2)
         yn = input("Do you play again?(y/n)")
