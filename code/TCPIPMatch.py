@@ -184,10 +184,10 @@ class controller():
 
     def select_square(self, target, i=0, j=0):
         os.system('cls')
-        if target == 1:
-            print("O turn")
-        else:
-            print("X turn")
+        # if target == 1:
+        #     print("O turn")
+        # else:
+        #     print("X turn")
         self.print_boad(i, j, target)
         while True:
             input_key = readchar.readkey()
@@ -220,75 +220,105 @@ class controller():
                 j = 0
             if self.boad_size <= j:
                 j = self.boad_size - 1
-            # sys.stdout.write(read)
             os.system('cls')
-            if target == 1:
-                print("O turn")
-            else:
-                print("X turn")
             self.print_boad(i, j, target)
 
-class CPU_match(othello_game):
-    def decide_squere(self):
-        target = -1
-        ij_list = []
-        for i in range(self.boad_size):
-            for j in range(self.boad_size):
-                if self.can_put(i, j, target):
-                    return i, j
+def play(game, controll, target):
+    if not game.exist_can_plase(target):
+        return -1
+    i, j = 0, 0
+    i, j = controll.select_square(target, i, j)
+    if i == -1 and j == -1:
+        return [-2, -2]
+    if game.can_put(i, j, target):
+        game.update_boad(i, j, target)
+        os.system('cls')
+        controll.print_boad()
+        target *= -1
+        # i = 0
+        # j = 0
+        return [i, j]
+    return [-1, -1]
 
-
-
-def main(cpu=0):
+def play_server():
     os.system('cls')
-    print("please input size of boad")
-    boad_size = int(input())
-    game = CPU_match(boad_size)
+    server = Server()
+    server.setting()  # connect
+
+    boad_size = 20
+    game = othello_game(boad_size)
     controll = controller(game.boad, game.boad_size)
-    target = 1
     finish = 0
     i = 0
     j = 0
 
+    turn = 1
     while True:
-        if not game.exist_can_plase(target):
-            target *= -1
-            if not game.exist_can_plase(target):
-                print("finish!")
-                finish = 1
+        if turn == 1:
+            [i, j] = play(game, controll, turn)
+            i = str(i)
+            j = str(j)
+            while len(i) != 2:
+                i = "0" + i
+            while len(j) != 2:
+                j = "0" + j
+            server.send(i + j)
+            turn = -1
+        else:
+            ij = server.get()
+            i = int(ij[:2])
+            j = int(ij[2:])
+            if i == 2 and j == 2:
                 break
-
-        if finish:
-            break
-        if cpu and target == -1:
-            i, j = game.decide_squere()
-            game.update_boad(i, j, target)
-            target *= -1
-            i = 0
-            j = 0
-            continue
-
-        i, j = controll.select_square(target, i, j)
-        if i == -1 and j == -1:
-            break
-        if game.can_put(i, j, target):
-            game.update_boad(i, j, target)
+            game.update_boad(i, j, turn)
             os.system('cls')
             controll.print_boad()
-            target *= -1
-            i = 0
-            j = 0
-    print(game.calculate_points())
+            turn = 1
+    server.close_connection()
 
+def play_client(server_IP = "localhost"):
+    os.system('cls')
+    client = Client()
+    client.setting(server_IP) #connect server
+
+    boad_size = 20
+    game = othello_game(boad_size)
+    controll = controller(game.boad, game.boad_size)
+    os.system('cls')
+    controll.print_boad()
+    finish = 0
+    i = 0
+    j = 0
+
+    turn = 1
+    while True:
+        if turn == -1:
+            [i, j] = play(game, controll, turn)
+            i = str(i)
+            j = str(j)
+            while len(i) != 2:
+                i = "0" + i
+            while len(j) != 2:
+                j = "0" + j
+            client.send(i + j)
+            turn = 1
+        else:
+            ij = client.get()
+            i = int(ij[:2])
+            j = int(ij[2:])
+            if i == 2 and j == 2:
+                break
+            game.update_boad(i, j, turn)
+            os.system('cls')
+            controll.print_boad()
+            turn = -1
+
+    client.close_connection()
 
 if __name__ == '__main__':
-    yn = input("Do you play?(y/n)")
-    while yn == "y":
-        cpu = input("CPU or manual or NetWork?(c/m/n)")
-        if cpu == "c":
-            main(1)
-        elif cpu == "m":
-            main()
-        else:
-            main(2)
-        yn = input("Do you play again?(y/n)")
+    yn = input("Are you TCP server(y/n)")
+    if yn == "y":
+        play_server()
+    else:
+        IP = input("serverIP:")
+        play_client(IP)
